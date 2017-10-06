@@ -1,0 +1,27 @@
+# Ignore IDE specific files
+*.komodo*
+*.sublime*
+.idea/
+
+# Ignore special files
+.DS_Store
+.fuse*
+._*
+*.bin
+
+# Ignore log files
+npm-debug.log
+v8.log
+
+# Ignore node modules
+/node_modules/
+
+# Temp files
+scratch.js
+scratch.py
+__pycache__
+test.raw
+
+# Ignore coverage results
+/coverage/
+.coveralls.yml

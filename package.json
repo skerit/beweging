@@ -1,0 +1,17 @@
+{
+	"name": "beweging",
+	"description": "Library for detecting movement",
+	"version": "0.1.0-alpha",
+	"author": "Jelle De Loecker <jelle@develry.be>",
+	"keywords": ["movement"],
+	"main": "./lib/init.js",
+	"repository": "git@github.com:skerit/beweging.git",
+	"dependencies": {
+		"protoblast": "~0.4.0"
+	},
+	"license": "MIT",
+	"engines": {
+		"node": ">=6.6.0"
+	},
+	"private": true
+}
