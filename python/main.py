@@ -35,6 +35,8 @@ class BasicMotionDetector:
 		self.deltaThresh = deltaThresh
 		self.minArea = minArea
 
+		self.count = 0
+
 		# Initialize the average image for motion detection
 		self.avg = None
 
@@ -42,9 +44,15 @@ class BasicMotionDetector:
 		# Initialize the list of locations containing motion
 		locs = []
 
+		self.count += 1
+
 		# Convert the image to gray
 		if (depth > 1):
 			image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+		# Blur the image slightly to reduce high frequency noise
+		# This should be done using ffmpeg
+		#image = cv2.GaussianBlur(image, (21, 21), 0)
 
 		# If the average image is None, initialize it
 		if self.avg is None:
@@ -56,6 +64,10 @@ class BasicMotionDetector:
 
 		# Compute the pixelwise difference between the current frame and the accumulated average
 		frameDelta = cv2.absdiff(image, cv2.convertScaleAbs(self.avg))
+
+		# Let it accummulate 15 frames for the weighted average
+		if (self.count < 15):
+			return locs
 
 		# Threshold the delta image and apply a series of dilations to help fill in holes
 		thresh = cv2.threshold(frameDelta, self.deltaThresh, 255, cv2.THRESH_BINARY)[1]
@@ -69,9 +81,31 @@ class BasicMotionDetector:
 		for c in cnts:
 			# Add the contour to the locations list if it exceeds the minimum area
 			if cv2.contourArea(c) > self.minArea:
-				locs.append(c.tolist())
+				locs.append(c)
 
-		return locs
+		rects = []
+
+		if len(locs) > 0:
+			# initialize the minimum and maximum (x, y)-coordinates,
+			# respectively
+			(minX, minY) = (np.inf, np.inf)
+			(maxX, maxY) = (-np.inf, -np.inf)
+
+			# loop over the locations of motion and accumulate the
+			# minimum and maximum locations of the bounding boxes
+			for l in locs:
+				(x, y, w, h) = cv2.boundingRect(l)
+				(minX, maxX) = (min(minX, x), max(maxX, x + w))
+				(minY, maxY) = (min(minY, y), max(maxY, y + h))
+
+				rects.append({
+					'sx' : minX,
+					'dx' : maxX,
+					'sy' : minY,
+					'dy' : maxY
+				})
+
+		return rects
 
 # The resolution of the image will go here
 width = 0
