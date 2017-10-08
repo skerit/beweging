@@ -27,8 +27,8 @@ describe('Walking', function() {
 		});
 
 		proc.on('end', function onEnd() {
-			assert.equal(walk > 2, true, 'No movement was detected');
-			assert.equal(lights, 0, 'Non-existing light changes were detected');
+			assert.equal(walk > 1, true, 'No movement was detected: ' + walk + ' motion events');
+			assert.equal(lights, 0, 'Non-existing light changes were detected: ' + lights);
 			done();
 		});
 	});

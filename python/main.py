@@ -64,6 +64,11 @@ class BasicMotionDetector:
 		if (depth > 1):
 			image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
+		# Calculate the average of the image,
+		# because it's grayscale it's a lightness-kind of average
+		average = np.average(image)
+		result['average'] = average
+
 		# Blur the image slightly to reduce high frequency noise
 		# This should be done using ffmpeg
 		#image = cv2.GaussianBlur(image, (21, 21), 0)
@@ -73,15 +78,28 @@ class BasicMotionDetector:
 			self.avg = image.astype("float")
 			return result
 
+		# If the image is too dark, apply an equilizer
+		if average < 60:
+			# Simple equilizer
+			#image = cv2.equalizeHist(image)
+
+			# Adaptive histogram equilization
+			clahe = cv2.createCLAHE(clipLimit=15.0, tileGridSize=(8,8))
+			image = clahe.apply(image)
+
+			#cv2.namedWindow('cimage', cv2.WINDOW_NORMAL)
+			#cv2.imshow('cimage', image)
+			#cv2.waitKey(0)
+
 		# Otherwise, find and accumulate the average (weighted) between consecutive frames
 		cv2.accumulateWeighted(image, self.avg, self.accumWeight)
-
-		# Compute the pixelwise difference between the current frame and the accumulated average
-		frameDelta = cv2.absdiff(image, cv2.convertScaleAbs(self.avg))
 
 		# Let it accummulate 15 frames for the weighted average
 		if (self.count < 15):
 			return result
+
+		# Compute the pixelwise difference between the current frame and the accumulated average
+		frameDelta = cv2.absdiff(image, cv2.convertScaleAbs(self.avg))
 
 		# Threshold the delta image and apply a series of dilations to help fill in holes
 		thresh = cv2.threshold(frameDelta, self.deltaThresh, 255, cv2.THRESH_BINARY)[1]
@@ -117,6 +135,8 @@ class BasicMotionDetector:
 					'sy' : minY,
 					'dy' : maxY
 				})
+
+			#np.average(image, axis=0)
 
 		return result
 

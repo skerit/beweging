@@ -11,6 +11,26 @@ describe('Lights', function() {
 
 	let beweging = new Beweging.Beweging();
 
+	it('should not emit motion when lights alternate from dark to light', function lightOn(done) {
+
+		var source = libpath.resolve(__dirname, '..', 'samples', 'alternating-light.h264'),
+		    proc   = beweging.detectStream(source),
+		    lights = 0;
+
+		proc.on('motion', function gotMotion(motion) {
+			throw new Error('Light was detected as motion');
+		});
+
+		proc.on('light', function gotLights() {
+			lights++;
+		});
+
+		proc.on('end', function onEnd() {
+			assert.equal(lights > 2, true, 'No lights were detected');
+			done();
+		});
+	});
+
 	it('should not emit motion when lights go on', function lightOn(done) {
 
 		var source = libpath.resolve(__dirname, '..', 'samples', 'dark-light.h264'),
@@ -28,6 +48,26 @@ describe('Lights', function() {
 
 		proc.on('end', function onEnd() {
 			assert.equal(lights > 2, true, 'No lights were detected');
+			done();
+		});
+	});
+
+	it('should not emit motion when lights go on from full darkness', function lightOn(done) {
+
+		var source = libpath.resolve(__dirname, '..', 'samples', 'total-darkness-to-light.h264'),
+		    proc   = beweging.detectStream(source),
+		    lights = 0;
+
+		proc.on('motion', function gotMotion(motion) {
+			throw new Error('Light was detected as motion');
+		});
+
+		proc.on('light', function gotLights() {
+			lights++;
+		});
+
+		proc.on('end', function onEnd() {
+			assert.equal(lights > 0, true, 'No lights were detected, expected: ' + lights);
 			done();
 		});
 	});
