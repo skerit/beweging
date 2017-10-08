@@ -22,7 +22,14 @@ def log(message):
 	respond({'log': message})
 
 class BasicMotionDetector:
-	def __init__(self, accumWeight = 0.5, deltaThresh = 5, minArea = 5000):
+
+	# accumWeight : The floating point value used for the taking the weighted
+	#               average between the current frame and the previous set of
+	#               frames. A larger accumWeight  will result in the background
+	#               model having less “memory” and quickly “forgetting” what
+	#               previous frames looked like
+	# deltaThresh : Smaller values will detect more motion
+	def __init__(self, accumWeight = 0.7, deltaThresh = 6, minArea = 5000):
 		# Determine the OpenCV version, followed by storing the the frame accumulation weight, the fixed threshold for
 		# the delta image, and finally the minimum area required for "motion" to be reported
 
@@ -43,6 +50,13 @@ class BasicMotionDetector:
 	def update(self, image, depth):
 		# Initialize the list of locations containing motion
 		locs = []
+		rlocs = []
+		rects = []
+
+		result = {
+			'locs'  : rlocs,
+			'rects' : rects
+		}
 
 		self.count += 1
 
@@ -57,7 +71,7 @@ class BasicMotionDetector:
 		# If the average image is None, initialize it
 		if self.avg is None:
 			self.avg = image.astype("float")
-			return locs
+			return result
 
 		# Otherwise, find and accumulate the average (weighted) between consecutive frames
 		cv2.accumulateWeighted(image, self.avg, self.accumWeight)
@@ -67,7 +81,7 @@ class BasicMotionDetector:
 
 		# Let it accummulate 15 frames for the weighted average
 		if (self.count < 15):
-			return locs
+			return result
 
 		# Threshold the delta image and apply a series of dilations to help fill in holes
 		thresh = cv2.threshold(frameDelta, self.deltaThresh, 255, cv2.THRESH_BINARY)[1]
@@ -83,8 +97,6 @@ class BasicMotionDetector:
 			if cv2.contourArea(c) > self.minArea:
 				locs.append(c)
 
-		rects = []
-
 		if len(locs) > 0:
 			# initialize the minimum and maximum (x, y)-coordinates,
 			# respectively
@@ -94,6 +106,7 @@ class BasicMotionDetector:
 			# loop over the locations of motion and accumulate the
 			# minimum and maximum locations of the bounding boxes
 			for l in locs:
+				rlocs.append(len(l))
 				(x, y, w, h) = cv2.boundingRect(l)
 				(minX, maxX) = (min(minX, x), max(maxX, x + w))
 				(minY, maxY) = (min(minY, y), max(maxY, y + h))
@@ -105,7 +118,7 @@ class BasicMotionDetector:
 					'dy' : maxY
 				})
 
-		return rects
+		return result
 
 # The resolution of the image will go here
 width = 0
@@ -158,10 +171,8 @@ while 1:
 			# Convert the bytes into a numpy image array
 			image = convertToNumpy(bytearray(buf), width, height, depth)
 
-			locs = motion.update(image, depth)
+			output = motion.update(image, depth)
 
-			output = {}
-			output['locs'] = locs
 			respond(output)
 
 	respond(output)
