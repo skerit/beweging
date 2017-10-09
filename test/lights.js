@@ -11,6 +11,28 @@ describe('Lights', function() {
 
 	let beweging = new Beweging.Beweging();
 
+	it('should not emit motion when lights alternate from light to dark', function lightOn(done) {
+
+		var source = libpath.resolve(__dirname, '..', 'samples', 'alternating-light2.h264'),
+		    proc,
+		    lights = 0;
+
+		proc = beweging.detectStream(source);
+
+		proc.on('motion', function gotMotion(motion) {
+			throw new Error('Light was detected as motion');
+		});
+
+		proc.on('light', function gotLights() {
+			lights++;
+		});
+
+		proc.on('end', function onEnd() {
+			assert.equal(lights > 2, true, 'No lights were detected');
+			done();
+		});
+	});
+
 	it('should not emit motion when lights alternate from dark to light', function lightOn(done) {
 
 		var source = libpath.resolve(__dirname, '..', 'samples', 'alternating-light.h264'),

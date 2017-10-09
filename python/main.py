@@ -94,8 +94,8 @@ class BasicMotionDetector:
 		# Otherwise, find and accumulate the average (weighted) between consecutive frames
 		cv2.accumulateWeighted(image, self.avg, self.accumWeight)
 
-		# Let it accummulate 15 frames for the weighted average
-		if (self.count < 15):
+		# Let it accummulate 8 frames for the weighted average
+		if (self.count < 8):
 			return result
 
 		# Compute the pixelwise difference between the current frame and the accumulated average
